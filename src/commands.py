@@ -14,6 +14,11 @@ PLAYING = False
 CURRENT_URL = None
 
 def load_config(name: str):
+    """加载config文件
+    
+    Args:
+        name: 配置文件名
+    """
     def decorator(func: typing.Callable):
         path = os.path.join("configs", name + ".json")
         
@@ -43,14 +48,15 @@ def load_config(name: str):
     return decorator
 
 # 辅助函数
-"""
-异步获取音频 URL
-参数:
-    song: str - 音频 URL
-返回:
-    str - 音频 URL
-"""
 async def get_audio_url(song: str) -> str:
+    """异步获取音频 URL
+    
+    Args:
+        song: 音频 URL
+    
+    Returns:
+        音频 URL
+    """
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
@@ -65,15 +71,17 @@ async def get_audio_url(song: str) -> str:
     except yt_dlp.utils.DownloadError:
         return None
 
-"""
-搜索音频
-参数:
-    keyword: str - 搜索关键字
-    max_count: int - 最大搜索结果数量
-返回:
-    dict - 搜索结果
-"""
+
 async def search_audio(keyword: str, max_count: int) -> dict:
+    """搜索音频
+    
+    Args:
+        keyword: 搜索关键字
+        max_count: 最大搜索结果数量
+    
+    Returns:
+        搜索结果
+    """
     # 异步搜索音频
     loop = asyncio.get_event_loop()
     try:
@@ -82,13 +90,14 @@ async def search_audio(keyword: str, max_count: int) -> dict:
     except yt_dlp.utils.DownloadError:
         return None
 
-"""
-开始播放音频
-参数:
-    ctx: SlashContext - 上下文
-    message: Message - 消息
-"""
+
 async def start_play(ctx: SlashContext, message: Message):
+    """开始播放音频
+    
+    Args:
+        ctx: 上下文
+        message: 消息
+    """
     global PLAYING, CURRENT_URL, INDEX, CACHE
     components.previousButton.disabled = (INDEX == 0)
     components.nextButton.disabled = (INDEX + 1 == len(PLAYLIST))
@@ -125,7 +134,7 @@ async def start_play(ctx: SlashContext, message: Message):
         # 使用 AudioVolume 播放音频
         audio = AudioVolume(audio_url)
         CACHE[url] = audio_url
-        await send_panel(ctx, next=True)
+        await send_panel(ctx, continueButton=True)
         
         await ctx.voice_state.play(audio)
         INDEX += 1
@@ -133,21 +142,32 @@ async def start_play(ctx: SlashContext, message: Message):
 
     PLAYING = False
 
-"""
-设置INDEX 公开接口
-参数:
-    i: int - 索引增量
-"""
+
 def setIndex(i: int):
+    """设置INDEX
+    
+    Args:
+        i: 索引增量
+    """
     global INDEX
     INDEX += i
 
-async def send_panel(ctx: SlashContext, content: str = None, next = False):
+async def send_panel(ctx: SlashContext, content: str = None, continueButton = False) -> Message:
+    """发送播放面板
+    
+    Args:
+        ctx: 上下文
+        content: 内容
+        continueButton: 是否设置stateButton为continueButton
+        
+    Returns:
+        信息
+    """
     if not PLAYING or not ctx.voice_state:
         logger.info("音频未播放或机器人未加入语音频道")
         await ctx.send("音频未播放或机器人未加入语音频道")
         return
-    stateButton = components.stopButton if ctx.voice_state.playing or next else components.continueButton
+    stateButton = components.stopButton if ctx.voice_state.playing or continueButton else components.continueButton
     components.previousButton.disabled = (INDEX == 0)
     components.nextButton.disabled = (INDEX + 1 == len(PLAYLIST))
     components.VDButton.disabled = (ctx.voice_state.volume == 0)
@@ -167,7 +187,15 @@ async def send_panel(ctx: SlashContext, content: str = None, next = False):
 
 @slash_command(name="ping", description="测试延迟")
 @load_config("ping")
-async def ping(ctx: SlashContext, count: int = 5):
+async def ping(ctx: SlashContext, count: int = 5) -> None:
+    """测试服务器与机器人的延迟
+    
+    Args:
+        count: 测试次数
+    Returns:
+        None
+    """
+    
     pings = []
     
     before = time.perf_counter()
@@ -186,7 +214,16 @@ async def ping(ctx: SlashContext, count: int = 5):
 
 @slash_command(name="play", description="播放音乐")
 @load_config("play")
-async def play(ctx: SlashContext, url: str):
+async def play(ctx: SlashContext, url: str) -> None:
+    """播放音频，如果音频正在播放，则添加到播放列表
+    
+    Args:
+        ctx: 上下文
+        url: 音频 URL
+    Returns:
+        None
+    """
+    
     PLAYLIST.append(url)
     logger.info(f"{ctx.author.username} 添加音频: {url}")
     if PLAYING: 
@@ -201,6 +238,19 @@ async def play(ctx: SlashContext, url: str):
 @slash_command(name="search", description="搜索音乐")
 @load_config("search")
 async def search(ctx: SlashContext, keyword: str, max_count: int = 5):
+    """搜索音频并显示选择菜单
+    
+    Args:
+        ctx: 上下文
+        keyword: 搜索关键字
+        max_count: 最大搜索结果数量
+    
+    Returns:
+        None
+    
+    TODO: 优化搜索结果显示(显示添加到播放列表) 优化搜索速度
+    """
+    
     # 延迟响应以避免交互超时
     await ctx.defer()
     message = await ctx.send("正在搜索中...")
@@ -221,16 +271,23 @@ async def search(ctx: SlashContext, keyword: str, max_count: int = 5):
 
 @slash_command(name="panel", description="显示播放面板")
 async def panel(ctx: SlashContext):
+    """通过`send_panel`发送播放面板"""
     await send_panel(ctx)
 
 @slash_command(name="showlist", description="显示播放列表")
 async def showlist(ctx: SlashContext):
+    """显示播放列表
+    
+    TODO: 优化显示效果
+    """
     plylst = PLAYLIST[INDEX:]
     plylst.insert(0, CURRENT_URL)
     await ctx.send("当前列表: \n" + "\n".join(plylst))
 
 @slash_command(name='connect', description="连接到语音频道")
 async def connect(ctx: SlashContext):
+    """连接到语音频道"""
+    
     global PLAYING
     if not ctx.author.voice:
         await ctx.send("您未连接到语音频道")
@@ -244,10 +301,11 @@ async def connect(ctx: SlashContext):
     else:
         await ctx.send(f"已连接到语音频道: {channel.name}")
         
-        
 
 @slash_command(name="disconnect", description="断开连接")
 async def disconnect(ctx: SlashContext):
+    """断开连接"""
+    
     global PLAYING, INDEX
     if ctx.voice_state:
         PLAYING = False
@@ -260,6 +318,8 @@ async def disconnect(ctx: SlashContext):
 
 @slash_command(name="clear_list", description="清空播放列表")
 async def clearList(ctx: SlashContext):
+    """清空播放列表"""
+    
     global PLAYLIST, INDEX
     PLAYLIST = []
     INDEX = 0
