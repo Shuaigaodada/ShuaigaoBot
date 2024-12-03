@@ -62,7 +62,7 @@ async def componentHandle(event: Component):
         case "next":
             await ctx.voice_state.stop()  # 停止当前音频        
             logger.info("已停止当前音频，准备播放下一首")
-            await send_panel(ctx, next=True)
+            await send_panel(ctx, continueButton=True)
             await start_play(ctx, ctx.message)
         
         case "previous": 
