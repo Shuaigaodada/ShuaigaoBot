@@ -6,6 +6,7 @@ import asyncio
 import components
 from itypes import *
 from loguru import logger
+from concurrent.futures import ThreadPoolExecutor
 
 PLAYLIST: typing.List[str] = []
 """播放列表 所有数据为链接"""
@@ -91,13 +92,16 @@ async def search_audio(keyword: str, max_count: int) -> dict:
     Returns:
         搜索结果
     """
-    # 异步搜索音频
-    loop = asyncio.get_event_loop()
-    try:
-        with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
-            return await loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch{max_count}:{keyword}", download=False))
-    except yt_dlp.utils.DownloadError:
-        return None
+    # 线程池 每一个线程搜索一个结果
+    with ThreadPoolExecutor(max_count) as executor:
+        loop = asyncio.get_event_loop()
+        tasks = []
+        dlp = yt_dlp.YoutubeDL({"quiet": True, "nocheckertificate": True, "extract_flat": True})
+        task = lambda: dlp.extract_info(f"ytsearch1:{keyword}", download=False)
+        for _ in range(max_count):
+            tasks.append(loop.run_in_executor(executor, task))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return [reslut for reslut in results if not isinstance(reslut, Exception)]
 
 
 async def start_play(ctx: SlashContext, message: Message):
@@ -246,7 +250,7 @@ async def play(ctx: SlashContext, url: str) -> None:
     
 @slash_command(name="search", description="搜索音乐")
 @load_config("search")
-async def search(ctx: SlashContext, keyword: str, max_count: int = 5):
+async def search(ctx: SlashContext, keyword: str, max_count: int = 3):
     """搜索音频并显示选择菜单
     
     Args:
