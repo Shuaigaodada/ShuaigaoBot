@@ -7,11 +7,20 @@ import components
 from itypes import *
 from loguru import logger
 
-PLAYLIST = []
-CACHE = {}
-INDEX = 0
-PLAYING = False
-CURRENT_URL = None
+PLAYLIST: typing.List[str] = []
+"""播放列表 所有数据为链接"""
+
+CACHE: typing.Dict[str, AudioVolume] = {}
+"""缓存音频类 数据为 URL: 音频类"""
+
+INDEX: int = 0
+"""播放列表索引 不可为负值"""
+
+PLAYING: bool = False
+"""是否在播放音频循环中"""
+
+CURRENT_URL: typing.Optional[str] = None
+"""当前播放音频链接"""
 
 def load_config(name: str):
     """加载config文件
@@ -285,15 +294,27 @@ async def showlist(ctx: SlashContext):
     await ctx.send("当前列表: \n" + "\n".join(plylst))
 
 @slash_command(name='connect', description="连接到语音频道")
-async def connect(ctx: SlashContext):
-    """连接到语音频道"""
+@load_config("connect")
+async def connect(ctx: SlashContext, channel: typing.Optional[ChannelType] = None) -> None:
+    """连接到语音频道
+    
+    Args:
+        channel: 语音频道
+    
+    Returns:
+        None
+    """
     
     global PLAYING
     if not ctx.author.voice:
         await ctx.send("您未连接到语音频道")
         return
 
-    channel = ctx.author.voice.channel
+    channel = ctx.author.voice.channel if channel is None else channel    
+    
+    if not channel:
+        await ctx.send("请选择一个语音频道或者加入一个语音频道")
+        return
     await channel.connect()
     if INDEX != len(PLAYLIST):
         message = await ctx.send(f"已连接到语音频道: {channel.name}, 继续播放音频: {CURRENT_URL}")

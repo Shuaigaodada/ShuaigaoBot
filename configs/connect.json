@@ -1,0 +1,11 @@
+[
+    {
+        "name": "connect",
+        "argument_name": "connect",
+        "opt_type": "CHANNEL",
+        "description": "连接到指定的频道",
+        "min_value": 1,
+        "max_value": 1,
+        "required": false
+    }
+]
