@@ -317,7 +317,7 @@ async def disconnect(ctx: SlashContext):
         await ctx.send("机器人未加入语音频道")
 
 @slash_command(name="clear_list", description="清空播放列表")
-async def clearList(ctx: SlashContext):
+async def clear_list(ctx: SlashContext):
     """清空播放列表"""
     
     global PLAYLIST, INDEX
