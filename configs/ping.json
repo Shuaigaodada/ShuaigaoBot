@@ -1,0 +1,10 @@
+[
+    {
+        "name": "count",
+        "argument_name": "count",
+        "opt_type": "INTEGER",
+        "description": "ping的次数",
+        "min_value": 1,
+        "max_value": 50
+    }
+]

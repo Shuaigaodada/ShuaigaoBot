@@ -1,0 +1,4 @@
+discord-py-interactions
+loguru
+discord.py-interactions[voice]
+ffmpeg

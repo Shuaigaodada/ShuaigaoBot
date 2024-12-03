@@ -1,0 +1,16 @@
+[
+    {
+        "name": "keyword",
+        "argument_name": "keyword",
+        "opt_type": "STRING",
+        "description": "搜索关键词",
+        "required": true
+    },
+    {
+        "name": "max_count",
+        "argument_name": "max_count",
+        "opt_type": "INTEGER",
+        "description": "最大搜索结果数量",
+        "required": false
+    }
+]

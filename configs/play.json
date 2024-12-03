@@ -1,0 +1,9 @@
+[
+    {
+        "name": "url",
+        "argument_name": "url",
+        "opt_type": "STRING",
+        "description": "播放的链接",
+        "required": true
+    }
+]
