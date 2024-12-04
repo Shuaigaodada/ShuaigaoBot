@@ -124,10 +124,12 @@ async def start_play(ctx: SlashContext, message: Message):
         logger.info("调用播放函数时，音频正在播放") 
         return
     
+    PLAYING = True
+    
     # 如果机器人还没有加入语音频道，加入作者所在的语音频道
     if not ctx.voice_state or ctx.voice_state.channel != ctx.author.voice.channel:
         await ctx.author.voice.channel.connect()
-    PLAYING = True
+    
     while PLAYING:
         url = PLAYLIST[INDEX]
         await message.edit(content="正在加载音频...")
@@ -241,9 +243,8 @@ async def play(ctx: SlashContext, url: str) -> None:
     logger.info(f"{ctx.author.username} 添加音频: {url}")
     if PLAYING: 
         msg = await send_panel(ctx, "已添加到播放列表, 请等待当前音频播放完毕: " + CURRENT_URL)
-        if msg is None:
-            return
-    else: msg = await ctx.send("正在加载音频...")
+    else: 
+        msg = await ctx.send("正在加载音频...")
         
     await start_play(ctx, msg)
 
